@@ -11,9 +11,9 @@ const store = create((set) => ({
   dataCtrl : async function(action){
 
 
-    set( (state)=>{
-      return {data:[...state.data, action.data] } //...state.data(기존데이터)에 action.data(신규데이터)저장
-     });
+    // set( (state)=>{
+    //   return {data:[...state.data, action.data] } //...state.data(기존데이터)에 action.data(신규데이터)저장
+    //  });
 
     let res;
 
@@ -33,7 +33,7 @@ const store = create((set) => ({
         case 'put' :
           await instance.put("/",action.data); 
           set( (state)=>{
-             let update = state.data.map((obj)=>{
+             let update = [...state.data].map((obj)=>{
                 if(action.data.id == obj.id){
                   obj.status = action.status
                 }
@@ -43,15 +43,18 @@ const store = create((set) => ({
           });   
        break;
        
-        case 'delete' : 
-        res = await instance.delete(`/?id=${action.data}`); break;
-    }
+       case 'delete' : 
+       res = await instance.delete(`/?id=${action.data}`); 
+       set( (state)=> {
+         let del = [...state.data].filter((obj)=>{
+                       return obj.id != action.data                          
+                     })
+         return {data:del};
+       });  
+       break;
+}    
 
-    // set({data:res.data});
-    set( (state)=>{
-      return {data:[...state.data, ...res.data] } 
-  });
- },
+},
   sortCtrl: function(sort){
   
    set((state)=>{
