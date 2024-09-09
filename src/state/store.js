@@ -2,7 +2,7 @@ import axios from 'axios';
 import { create } from 'zustand';
 
 const instance = axios.create({
-    baseURL: 'https://port-0-express-server24-m0uahclw12f8e972.sel4.cloudtype.app/todos',
+    baseURL: process.env.REACT_APP_SERVER_URL,
 });
 
 const store = create((set) => ({
@@ -10,26 +10,48 @@ const store = create((set) => ({
   sortData:[],
   dataCtrl : async function(action){
 
+
+    set( (state)=>{
+      return {data:[...state.data, action.data] } //...state.data(기존데이터)에 action.data(신규데이터)저장
+     });
+
     let res;
 
     switch(action.type){
         case 'get' : 
-        res = await instance.get("/"); break;
+        res = await instance.get("/");
+        set( {data:res.data} );
+        break;
 
-        case 'post' : 
-        res = await instance.post("/",action.data); break;
+        case 'post' :
+          await instance.post("/",action.data);
+          set( (state)=>{
+              return {data:[...state.data, action.data] } 
+          });
+          break;
 
-        case 'put' : 
-        
-        res = await instance.put("/",action.data); break;
+        case 'put' :
+          await instance.put("/",action.data); 
+          set( (state)=>{
+             let update = state.data.map((obj)=>{
+                if(action.data.id == obj.id){
+                  obj.status = action.status
+                }
+                return obj;
+              })
+            return{data:update}; 
+          });   
+       break;
        
         case 'delete' : 
         res = await instance.delete(`/?id=${action.data}`); break;
     }
 
-    set({data:res.data.list})
-
-  },
+    // set({data:res.data});
+    set( (state)=>{
+      return {data:[...state.data, ...res.data] } 
+  });
+ },
   sortCtrl: function(sort){
   
    set((state)=>{
